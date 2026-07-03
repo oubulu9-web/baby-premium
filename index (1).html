@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Baby Premium</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     DESIGN TOKENS — Liquid Glass
+     Background stays a soft, colorful gradient field; every
+     surface above it is translucent + blurred so that field
+     shows through, with a bright top highlight to sell the
+     "glass catching light" feel.
+     ============================================================ */
+  :root{
+    --ink:            #2B2D3A;
+    --ink-soft:       #5B5E6E;
+    --ink-faint:      rgba(43,45,58,0.55);
+
+    --sage:           #7FA98A;
+    --apricot:        #F2A65A;
+    --apricot-deep:   #D9822E;
+    --sky:            #6E9BC7;
+    --lilac:          #B08BC7;
+    --danger:         #E0645A;
+
+    --stage-newborn:  #F2A65A;
+    --stage-early:    #7FA98A;
+    --stage-mid:      #6E9BC7;
+    --stage-toddler:  #B08BC7;
+
+    /* glass surfaces — tuned per-layer opacity so stacked glass reads correctly */
+    --glass-1:        rgba(255,255,255,0.42);   /* cards, chips */
+    --glass-1-brd:     rgba(255,255,255,0.65);
+    --glass-2:        rgba(255,255,255,0.30);   /* topbar, drawers (thinner) */
+    --glass-2-brd:     rgba(255,255,255,0.55);
+    --glass-dark:     rgba(43,45,58,0.72);       /* ink-tinted glass for CTAs/float bar */
+    --glass-dark-brd: rgba(255,255,255,0.28);
+    --glass-highlight: rgba(255,255,255,0.9);
+
+    --display: 'Fraunces', serif;
+    --body: 'Plus Jakarta Sans', sans-serif;
+
+    --radius-l: 22px;
+    --radius-m: 16px;
+    --radius-s: 11px;
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:var(--body);
+    color:var(--ink);
+    padding-bottom:100px;
+    min-height:100vh;
+    position:relative;
+    overflow-x:hidden;
+  }
+  h1,h2,h3{ font-family:var(--display); margin:0; letter-spacing:-0.01em; }
+  button{ font-family:inherit; }
+  ::selection{ background:var(--sage); color:#fff; }
+
+  /* ============================================================
+     BACKGROUND — soft blurred color field the glass sits above.
+     Fixed so it stays put while content scrolls over it.
+     ============================================================ */
+  .bg{
+    position:fixed; inset:0; z-index:-1;
+    background:
+      radial-gradient(ellipse 60% 40% at 12% 8%,  rgba(242,166,90,0.55) 0%, transparent 60%),
+      radial-gradient(ellipse 55% 45% at 90% 18%, rgba(110,155,199,0.50) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 15% 55%, rgba(127,169,138,0.45) 0%, transparent 60%),
+      radial-gradient(ellipse 65% 55% at 95% 78%, rgba(176,139,199,0.45) 0%, transparent 60%),
+      radial-gradient(ellipse 70% 60% at 40% 100%, rgba(242,166,90,0.35) 0%, transparent 60%),
+      linear-gradient(180deg, #FDFBF7 0%, #F6F1E8 100%);
+    filter: blur(60px) saturate(130%);
+    transform: scale(1.2);
+  }
+
+  /* reusable glass mixin-ish classes */
+  .glass{
+    background:var(--glass-1);
+    backdrop-filter: blur(22px) saturate(180%);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    border:1px solid var(--glass-1-brd);
+    box-shadow:
+      0 8px 32px rgba(43,45,58,0.12),
+      inset 0 1px 0 var(--glass-highlight),
+      inset 0 -1px 0 rgba(255,255,255,0.15);
+  }
+  .glass-thin{
+    background:var(--glass-2);
+    backdrop-filter: blur(26px) saturate(180%);
+    -webkit-backdrop-filter: blur(26px) saturate(180%);
+    border:1px solid var(--glass-2-brd);
+    box-shadow:
+      0 4px 24px rgba(43,45,58,0.10),
+      inset 0 1px 0 var(--glass-highlight);
+  }
+  .glass-dark{
+    background:var(--glass-dark);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border:1px solid var(--glass-dark-brd);
+    box-shadow:
+      0 10px 34px rgba(43,45,58,0.35),
+      inset 0 1px 0 rgba(255,255,255,0.35);
+  }
+
+  /* ============================================================
+     TOP BAR
+     ============================================================ */
+  .topbar{
+    position:sticky; top:0; z-index:30;
+    display:flex; align-items:center; justify-content:space-between;
+    margin:10px 12px 0;
+    padding:12px 16px;
+    border-radius:20px;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand-mark{
+    width:38px; height:38px; border-radius:13px;
+    background:linear-gradient(145deg, rgba(127,169,138,0.9), rgba(110,155,199,0.85));
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-family:var(--display); font-weight:700; font-size:18px;
+    flex-shrink:0;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 4px 12px rgba(43,45,58,0.18);
+  }
+  .brand-name{ font-family:var(--display); font-weight:600; font-size:19px; line-height:1; }
+  .brand-tag{ font-size:11px; color:var(--ink-faint); margin-top:3px; }
+
+  .cart-btn{
+    position:relative;
+    width:42px; height:42px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .cart-btn svg{ width:18px; height:18px; }
+  .cart-count{
+    position:absolute; top:-4px; right:-4px;
+    background:var(--apricot-deep); color:#fff;
+    font-size:10px; font-weight:700; line-height:1;
+    min-width:17px; height:17px; border-radius:9px;
+    display:flex; align-items:center; justify-content:center;
+    padding:0 3px;
+    box-shadow:0 2px 6px rgba(217,130,46,0.5);
+  }
+
+  /* ============================================================
+     HERO
+     ============================================================ */
+  .hero{ padding:24px 20px 6px; }
+  .hero h1{ font-size:27px; font-weight:600; line-height:1.15; max-width:280px; }
+  .hero p{ margin:9px 0 0; font-size:13.5px; color:var(--ink-soft); max-width:300px; line-height:1.5; }
+
+  /* stage quick filters — the signature element, now glass pills */
+  .stage-row{
+    display:flex; gap:9px; padding:18px 20px 4px;
+    overflow-x:auto; scrollbar-width:none;
+  }
+  .stage-row::-webkit-scrollbar{ display:none; }
+  .stage-chip{
+    flex-shrink:0;
+    display:flex; align-items:center; gap:6px;
+    padding:8px 14px 8px 10px;
+    border-radius:22px;
+    font-size:12.5px; font-weight:600; color:var(--ink);
+    cursor:pointer; white-space:nowrap;
+    transition:transform .15s ease, background .15s;
+  }
+  .stage-chip:active{ transform:scale(0.96); }
+  .stage-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; box-shadow:0 0 6px currentColor; }
+  .stage-chip.active{ color:#fff; }
+  .stage-chip.active .stage-dot{ box-shadow:0 0 0 2px rgba(255,255,255,0.4); }
+
+  /* ============================================================
+     CATEGORY TABS
+     ============================================================ */
+  .cat-row{
+    display:flex; gap:7px; padding:14px 20px 12px;
+    overflow-x:auto; scrollbar-width:none;
+  }
+  .cat-row::-webkit-scrollbar{ display:none; }
+  .cat-chip{
+    flex-shrink:0; padding:9px 16px;
+    border-radius:14px; border:1px solid transparent;
+    background:transparent; color:var(--ink-soft);
+    font-size:13px; font-weight:700; cursor:pointer;
+    transition:transform .15s ease;
+  }
+  .cat-chip:active{ transform:scale(0.96); }
+  .cat-chip.active{ color:var(--ink); }
+
+  /* ============================================================
+     PRODUCT GRID
+     ============================================================ */
+  .grid{
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:13px; padding:6px 16px 16px;
+  }
+  .card{
+    border-radius:var(--radius-l);
+    padding:13px;
+    display:flex; flex-direction:column;
+    position:relative;
+    overflow:hidden;
+    transition:transform .18s ease;
+  }
+  .card::before{
+    /* specular sheen across the top of the glass card */
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:50%;
+    background:linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0) 100%);
+    pointer-events:none;
+  }
+  .card:active{ transform:scale(0.98); }
+  .card-badge{
+    align-self:flex-start;
+    display:flex; align-items:center; gap:5px;
+    font-size:10px; font-weight:700; letter-spacing:.02em;
+    color:var(--ink-soft);
+    background:rgba(255,255,255,0.55);
+    border:1px solid rgba(255,255,255,0.7);
+    border-radius:8px; padding:4px 8px 4px 6px;
+    margin-bottom:9px;
+    position:relative; z-index:1;
+  }
+  .card-emoji{
+    font-size:34px; line-height:1; margin:2px 0 10px;
+    position:relative; z-index:1;
+    filter:drop-shadow(0 4px 8px rgba(43,45,58,0.15));
+  }
+  .card-name{ font-size:13.5px; font-weight:700; line-height:1.3; position:relative; z-index:1; }
+  .card-size{ font-size:11.5px; color:var(--ink-faint); margin-top:2px; position:relative; z-index:1; }
+  .card-bottom{
+    margin-top:12px; display:flex; align-items:center; justify-content:space-between;
+    position:relative; z-index:1;
+  }
+  .card-price{ font-family:var(--display); font-weight:600; font-size:15.5px; }
+
+  .stepper{ display:flex; align-items:center; gap:0; }
+  .add-btn{
+    width:31px; height:31px; border-radius:10px;
+    border:1px solid rgba(255,255,255,0.4);
+    background:linear-gradient(145deg, rgba(43,45,58,0.92), rgba(43,45,58,0.75));
+    color:#fff;
+    font-size:17px; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 4px 10px rgba(43,45,58,0.25);
+  }
+  .qty-controls{
+    display:flex; align-items:center; gap:2px;
+    background:rgba(255,255,255,0.55);
+    border:1px solid rgba(255,255,255,0.7);
+    border-radius:10px; padding:2px;
+  }
+  .qty-controls button{
+    width:27px; height:27px; border:none; background:transparent;
+    font-size:15px; font-weight:700; color:var(--ink); cursor:pointer;
+    border-radius:8px;
+  }
+  .qty-controls span{ min-width:18px; text-align:center; font-size:13px; font-weight:700; }
+
+  .empty-state{
+    padding:60px 24px; text-align:center; color:var(--ink-faint);
+  }
+  .empty-state .e{ font-size:34px; margin-bottom:10px; }
+
+  /* ============================================================
+     FLOATING CART BAR
+     ============================================================ */
+  .float-cart{
+    position:fixed; left:16px; right:16px; bottom:16px; z-index:40;
+    color:#fff;
+    border-radius:20px; padding:14px 18px;
+    display:flex; align-items:center; justify-content:space-between;
+    cursor:pointer;
+    transform:translateY(140%);
+    transition:transform .3s cubic-bezier(.2,.8,.2,1);
+  }
+  .float-cart.show{ transform:translateY(0); }
+  .float-cart .fc-left{ display:flex; align-items:center; gap:10px; }
+  .float-cart .fc-count{
+    background:var(--apricot); color:var(--ink);
+    font-weight:800; font-size:12px;
+    width:23px; height:23px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+  .float-cart .fc-label{ font-size:13.5px; font-weight:600; }
+  .float-cart .fc-total{ font-family:var(--display); font-weight:600; font-size:16px; }
+
+  /* ============================================================
+     DRAWER (cart + checkout)
+     ============================================================ */
+  .overlay{
+    position:fixed; inset:0; background:rgba(43,45,58,0.25);
+    backdrop-filter: blur(2px);
+    z-index:50; opacity:0; pointer-events:none; transition:opacity .2s;
+  }
+  .overlay.show{ opacity:1; pointer-events:auto; }
+
+  .drawer{
+    position:fixed; left:8px; right:8px; bottom:8px; z-index:60;
+    border-radius:26px;
+    max-height:86vh; overflow-y:auto;
+    transform:translateY(120%);
+    transition:transform .32s cubic-bezier(.2,.8,.2,1);
+    padding-bottom:22px;
+  }
+  .drawer.show{ transform:translateY(0); }
+  .drawer-handle{
+    width:36px; height:4px; background:rgba(43,45,58,0.2); border-radius:3px;
+    margin:12px auto 4px;
+  }
+  .drawer-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 20px 6px;
+  }
+  .drawer-head h2{ font-size:19px; font-weight:600; }
+  .close-x{
+    width:30px; height:30px; border-radius:50%;
+    background:rgba(255,255,255,0.5); border:1px solid rgba(255,255,255,0.7);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:14px; color:var(--ink-soft);
+  }
+
+  .cart-list{ padding:8px 16px; display:flex; flex-direction:column; gap:11px; }
+  .cart-row{
+    display:flex; gap:12px; align-items:center;
+    border-radius:16px; padding:11px 13px;
+    position:relative; overflow:hidden;
+  }
+  .cart-row .ce{ font-size:26px; position:relative; z-index:1; }
+  .cart-row .ci{ flex:1; min-width:0; position:relative; z-index:1; }
+  .cart-row .cn{ font-size:13px; font-weight:700; }
+  .cart-row .cs{ font-size:11px; color:var(--ink-faint); margin-top:1px; }
+  .cart-row .cp{ font-size:12.5px; font-weight:700; margin-top:4px; }
+
+  .summary{
+    padding:16px 20px 4px; display:flex; flex-direction:column; gap:8px;
+  }
+  .sum-line{ display:flex; justify-content:space-between; font-size:13.5px; color:var(--ink-soft); }
+  .sum-line.total{ color:var(--ink); font-weight:700; font-size:16px; padding-top:10px; border-top:1px solid rgba(43,45,58,0.12); }
+
+  .field{ padding:8px 20px; }
+  .field label{ display:block; font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:6px; }
+  .field input, .field textarea{
+    width:100%; border-radius:14px;
+    padding:12px 14px; font-family:var(--body); font-size:14px;
+    background:rgba(255,255,255,0.55);
+    border:1px solid rgba(255,255,255,0.75);
+    color:var(--ink); resize:none;
+  }
+  .field input::placeholder, .field textarea::placeholder{ color:rgba(43,45,58,0.4); }
+  .field input:focus, .field textarea:focus{ outline:none; border-color:var(--sage); background:rgba(255,255,255,0.75); }
+
+  .checkout-btn{
+    margin:16px 20px 4px; width:calc(100% - 40px);
+    color:#fff; border:none;
+    padding:16px; border-radius:16px; font-size:14.5px; font-weight:700;
+    cursor:pointer;
+    background:linear-gradient(145deg, rgba(217,130,46,0.95), rgba(242,166,90,0.9));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 8px 20px rgba(217,130,46,0.35);
+  }
+  .checkout-btn:disabled{ background:rgba(43,45,58,0.15); color:rgba(43,45,58,0.4); cursor:not-allowed; box-shadow:none; }
+  .back-link{
+    display:block; text-align:center; font-size:13px; color:var(--ink-soft);
+    font-weight:600; margin-top:6px; cursor:pointer;
+  }
+
+  .step2-note{ padding:0 20px; font-size:12.5px; color:var(--ink-faint); line-height:1.5; }
+
+  .toast{
+    position:fixed; top:16px; left:50%; transform:translateX(-50%) translateY(-30px);
+    color:#fff; font-size:13px; font-weight:600;
+    padding:12px 20px; border-radius:14px; z-index:100;
+    opacity:0; transition:all .25s; pointer-events:none;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+
+<div class="topbar glass-thin">
+  <div class="brand">
+    <div class="brand-mark">B</div>
+    <div>
+      <div class="brand-name">Baby Premium</div>
+      <div class="brand-tag">Restock the essentials</div>
+    </div>
+  </div>
+  <div class="cart-btn glass" id="cartBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#2B2D3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+    <div class="cart-count" id="cartCount" style="display:none;">0</div>
+  </div>
+</div>
+
+<div class="hero">
+  <h1>Everything your little one needs, on repeat.</h1>
+  <p>Filter by age &amp; stage to see what fits right now — restocks in a couple of taps.</p>
+</div>
+
+<div class="stage-row" id="stageRow"></div>
+<div class="cat-row" id="catRow"></div>
+<div class="grid" id="grid"></div>
+
+<div class="float-cart glass-dark" id="floatCart">
+  <div class="fc-left">
+    <div class="fc-count" id="fcCount">0</div>
+    <div class="fc-label">View cart</div>
+  </div>
+  <div class="fc-total" id="fcTotal">$0.00</div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+
+<!-- CART DRAWER -->
+<div class="drawer glass" id="cartDrawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-head">
+    <h2>Your cart</h2>
+    <div class="close-x" id="closeCart">✕</div>
+  </div>
+  <div class="cart-list" id="cartList"></div>
+  <div class="summary" id="cartSummary"></div>
+  <button class="checkout-btn" id="toCheckoutBtn">Continue to checkout</button>
+</div>
+
+<!-- CHECKOUT DRAWER -->
+<div class="drawer glass" id="checkoutDrawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-head">
+    <h2>Delivery details</h2>
+    <div class="close-x" id="closeCheckout">✕</div>
+  </div>
+  <p class="step2-note">We'll confirm your order and delivery window right here in Telegram.</p>
+  <div class="field">
+    <label>Full name</label>
+    <input type="text" id="inName" placeholder="Jamie Rivera">
+  </div>
+  <div class="field">
+    <label>Phone number</label>
+    <input type="tel" id="inPhone" placeholder="+1 555 000 1234">
+  </div>
+  <div class="field">
+    <label>Delivery address</label>
+    <textarea id="inAddress" rows="2" placeholder="Street, apartment, city"></textarea>
+  </div>
+  <div class="field">
+    <label>Note (optional)</label>
+    <textarea id="inNote" rows="2" placeholder="Gate code, preferred time, allergy notes…"></textarea>
+  </div>
+  <div class="summary" id="checkoutSummary"></div>
+  <button class="checkout-btn" id="placeOrderBtn">Place order</button>
+  <div class="back-link" id="backToCart">Back to cart</div>
+</div>
+
+<div class="toast glass-dark" id="toast"></div>
+
+<script>
+/* ==================================================================
+   PRODUCT DATA — edit this list to add/remove/change products.
+   stage: "newborn" | "early" | "mid" | "toddler"
+   category: "Formula" | "Diapers" | "Feeding" | "Bath & Skin" | "Milk"
+   ================================================================== */
+const PRODUCTS = [
+  { id:'f1', name:'Gentle Start Infant Formula', size:'23.2 oz tin', price:32.99, emoji:'🍼', stage:'newborn', category:'Formula' },
+  { id:'f2', name:'Sensitive Tummy Formula', size:'20 oz tin', price:29.49, emoji:'🍼', stage:'early', category:'Formula' },
+  { id:'f3', name:'Toddler Growing-Up Formula', size:'24 oz tin', price:27.99, emoji:'🍼', stage:'toddler', category:'Formula' },
+  { id:'f4', name:'Organic Formula, Stage 2', size:'21 oz tin', price:34.99, emoji:'🍼', stage:'mid', category:'Formula' },
+
+  { id:'d1', name:'Newborn Diapers, Size N', size:'40 count', price:14.99, emoji:'🩲', stage:'newborn', category:'Diapers' },
+  { id:'d2', name:'Diapers, Size 2', size:'80 count', price:22.49, emoji:'🩲', stage:'early', category:'Diapers' },
+  { id:'d3', name:'Diapers, Size 4', size:'72 count', price:24.99, emoji:'🩲', stage:'mid', category:'Diapers' },
+  { id:'d4', name:'Training Pants, Size 5', size:'56 count', price:26.99, emoji:'🩲', stage:'toddler', category:'Diapers' },
+  { id:'d5', name:'Sensitive Baby Wipes', size:'3-pack, 240ct', price:11.99, emoji:'🧻', stage:'early', category:'Diapers' },
+
+  { id:'m1', name:'Whole Milk, Toddler', size:'1/2 gallon', price:4.29, emoji:'🥛', stage:'toddler', category:'Milk' },
+  { id:'m2', name:'Oat Milk, Fortified', size:'32 oz', price:5.49, emoji:'🥛', stage:'toddler', category:'Milk' },
+  { id:'m3', name:'Breast Milk Storage Bags', size:'50 count', price:9.99, emoji:'🧊', stage:'newborn', category:'Feeding' },
+
+  { id:'b1', name:'Anti-Colic Baby Bottle', size:'9 oz, 2-pack', price:16.99, emoji:'🍶', stage:'newborn', category:'Feeding' },
+  { id:'b2', name:'Silicone Suction Bowl Set', size:'2-piece', price:13.49, emoji:'🥣', stage:'early', category:'Feeding' },
+  { id:'b3', name:'Bamboo Toddler Utensils', size:'4-piece', price:8.99, emoji:'🥄', stage:'toddler', category:'Feeding' },
+
+  { id:'s1', name:'Tear-Free Baby Wash', size:'13.6 oz', price:7.99, emoji:'🧴', stage:'newborn', category:'Bath & Skin' },
+  { id:'s2', name:'Diaper Rash Cream', size:'4 oz', price:6.49, emoji:'🧴', stage:'early', category:'Bath & Skin' },
+  { id:'s3', name:'Baby Lotion, Fragrance-Free', size:'16.9 oz', price:8.49, emoji:'🧴', stage:'mid', category:'Bath & Skin' },
+  { id:'s4', name:'Hooded Bath Towel', size:'1 count', price:12.99, emoji:'🛁', stage:'toddler', category:'Bath & Skin' },
+];
+
+const STAGES = [
+  { id:'all',     label:'All ages',  color:null },
+  { id:'newborn', label:'Newborn',   color:'var(--stage-newborn)' },
+  { id:'early',   label:'3–6 mo',    color:'var(--stage-early)' },
+  { id:'mid',     label:'6–12 mo',   color:'var(--stage-mid)' },
+  { id:'toddler', label:'Toddler',   color:'var(--stage-toddler)' },
+];
+const STAGE_LABEL = { newborn:'Newborn', early:'3–6 mo', mid:'6–12 mo', toddler:'Toddler' };
+const STAGE_COLOR = { newborn:'var(--stage-newborn)', early:'var(--stage-early)', mid:'var(--stage-mid)', toddler:'var(--stage-toddler)' };
+
+const CATEGORIES = ['All', 'Formula', 'Diapers', 'Feeding', 'Milk', 'Bath & Skin'];
+
+/* ==================================================================
+   STATE
+   ================================================================== */
+let activeStage = 'all';
+let activeCategory = 'All';
+let cart = {}; // id -> qty
+
+const tg = window.Telegram ? window.Telegram.WebApp : null;
+if (tg) { tg.ready(); tg.expand(); }
+
+/* ==================================================================
+   RENDER: filters
+   ================================================================== */
+function renderStages(){
+  const row = document.getElementById('stageRow');
+  row.innerHTML = STAGES.map(s => `
+    <div class="stage-chip ${activeStage===s.id?'active glass-dark':'glass'}" data-stage="${s.id}"
+         style="${activeStage===s.id && s.color ? `background:${s.color};border-color:transparent;` : ''}">
+      ${s.color ? `<span class="stage-dot" style="background:${s.color}; color:${s.color};"></span>` : ''}
+      ${s.label}
+    </div>
+  `).join('');
+  row.querySelectorAll('.stage-chip').forEach(el=>{
+    el.addEventListener('click', ()=>{ activeStage = el.dataset.stage; renderStages(); renderGrid(); });
+  });
+}
+
+function renderCats(){
+  const row = document.getElementById('catRow');
+  row.innerHTML = CATEGORIES.map(c => `
+    <button class="cat-chip ${activeCategory===c?'active glass-dark':''}" data-cat="${c}">${c}</button>
+  `).join('');
+  row.querySelectorAll('.cat-chip').forEach(el=>{
+    el.addEventListener('click', ()=>{ activeCategory = el.dataset.cat; renderCats(); renderGrid(); });
+  });
+}
+
+/* ==================================================================
+   RENDER: product grid
+   ================================================================== */
+function renderGrid(){
+  const grid = document.getElementById('grid');
+  const items = PRODUCTS.filter(p =>
+    (activeStage==='all' || p.stage===activeStage) &&
+    (activeCategory==='All' || p.category===activeCategory)
+  );
+
+  if (items.length === 0){
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+      <div class="e">🧸</div>
+      <div>No products in this filter yet.</div>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = items.map(p => {
+    const qty = cart[p.id] || 0;
+    return `
+    <div class="card glass">
+      <div class="card-badge">
+        <span class="stage-dot" style="background:${STAGE_COLOR[p.stage]}"></span>
+        ${STAGE_LABEL[p.stage]}
+      </div>
+      <div class="card-emoji">${p.emoji}</div>
+      <div class="card-name">${p.name}</div>
+      <div class="card-size">${p.size}</div>
+      <div class="card-bottom">
+        <div class="card-price">$${p.price.toFixed(2)}</div>
+        <div class="stepper" data-id="${p.id}">
+          ${qty === 0
+            ? `<button class="add-btn" data-action="add">+</button>`
+            : `<div class="qty-controls">
+                 <button data-action="dec">−</button>
+                 <span>${qty}</span>
+                 <button data-action="inc">+</button>
+               </div>`
+          }
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  grid.querySelectorAll('.stepper').forEach(el=>{
+    const id = el.dataset.id;
+    el.querySelectorAll('button').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const action = btn.dataset.action;
+        if (action==='add' || action==='inc') changeQty(id, 1);
+        if (action==='dec') changeQty(id, -1);
+      });
+    });
+  });
+}
+
+function changeQty(id, delta){
+  const next = (cart[id]||0) + delta;
+  if (next <= 0) delete cart[id]; else cart[id] = next;
+  if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+  renderGrid();
+  updateCartUI();
+}
+
+/* ==================================================================
+   CART TOTALS / FLOATING BAR
+   ================================================================== */
+function cartEntries(){
+  return Object.entries(cart).map(([id, qty]) => ({ ...PRODUCTS.find(p=>p.id===id), qty }));
+}
+function cartTotal(){
+  return cartEntries().reduce((sum, i) => sum + i.price * i.qty, 0);
+}
+function cartCount(){
+  return Object.values(cart).reduce((a,b)=>a+b, 0);
+}
+
+function updateCartUI(){
+  const count = cartCount();
+  const total = cartTotal();
+
+  const badge = document.getElementById('cartCount');
+  badge.style.display = count > 0 ? 'flex' : 'none';
+  badge.textContent = count;
+
+  const floatCart = document.getElementById('floatCart');
+  floatCart.classList.toggle('show', count > 0);
+  document.getElementById('fcCount').textContent = count;
+  document.getElementById('fcTotal').textContent = '$' + total.toFixed(2);
+
+  renderCartList();
+}
+
+const DELIVERY_FEE = 4.99;
+
+function renderCartList(){
+  const list = document.getElementById('cartList');
+  const entries = cartEntries();
+
+  if (entries.length === 0){
+    list.innerHTML = `<div class="empty-state"><div class="e">🛒</div><div>Your cart is empty.</div></div>`;
+  } else {
+    list.innerHTML = entries.map(i => `
+      <div class="cart-row glass">
+        <div class="ce">${i.emoji}</div>
+        <div class="ci">
+          <div class="cn">${i.name}</div>
+          <div class="cs">${i.size}</div>
+          <div class="cp">$${i.price.toFixed(2)} × ${i.qty}</div>
+        </div>
+        <div class="qty-controls" data-id="${i.id}">
+          <button data-action="dec">−</button>
+          <span>${i.qty}</span>
+          <button data-action="inc">+</button>
+        </div>
+      </div>
+    `).join('');
+    list.querySelectorAll('.qty-controls').forEach(el=>{
+      const id = el.dataset.id;
+      el.querySelectorAll('button').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          changeQty(id, btn.dataset.action==='inc' ? 1 : -1);
+        });
+      });
+    });
+  }
+
+  const subtotal = cartTotal();
+  const fee = entries.length ? DELIVERY_FEE : 0;
+  document.getElementById('cartSummary').innerHTML = entries.length ? `
+    <div class="sum-line"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
+    <div class="sum-line"><span>Delivery</span><span>$${fee.toFixed(2)}</span></div>
+    <div class="sum-line total"><span>Total</span><span>$${(subtotal+fee).toFixed(2)}</span></div>
+  ` : '';
+
+  document.getElementById('toCheckoutBtn').disabled = entries.length === 0;
+  document.getElementById('toCheckoutBtn').style.opacity = entries.length === 0 ? 0.5 : 1;
+}
+
+function renderCheckoutSummary(){
+  const entries = cartEntries();
+  const subtotal = cartTotal();
+  const fee = entries.length ? DELIVERY_FEE : 0;
+  document.getElementById('checkoutSummary').innerHTML = `
+    <div class="sum-line"><span>${cartCount()} item${cartCount()===1?'':'s'}</span><span>$${subtotal.toFixed(2)}</span></div>
+    <div class="sum-line"><span>Delivery</span><span>$${fee.toFixed(2)}</span></div>
+    <div class="sum-line total"><span>Total</span><span>$${(subtotal+fee).toFixed(2)}</span></div>
+  `;
+}
+
+/* ==================================================================
+   DRAWERS
+   ================================================================== */
+const overlay = document.getElementById('overlay');
+const cartDrawer = document.getElementById('cartDrawer');
+const checkoutDrawer = document.getElementById('checkoutDrawer');
+
+function openDrawer(el){
+  overlay.classList.add('show');
+  el.classList.add('show');
+}
+function closeDrawer(el){
+  el.classList.remove('show');
+  if (!cartDrawer.classList.contains('show') && !checkoutDrawer.classList.contains('show')){
+    overlay.classList.remove('show');
+  }
+}
+function closeAll(){
+  cartDrawer.classList.remove('show');
+  checkoutDrawer.classList.remove('show');
+  overlay.classList.remove('show');
+}
+
+document.getElementById('cartBtn').addEventListener('click', ()=> openDrawer(cartDrawer));
+document.getElementById('floatCart').addEventListener('click', ()=> openDrawer(cartDrawer));
+document.getElementById('closeCart').addEventListener('click', ()=> closeDrawer(cartDrawer));
+overlay.addEventListener('click', closeAll);
+
+document.getElementById('toCheckoutBtn').addEventListener('click', ()=>{
+  if (cartCount() === 0) return;
+  cartDrawer.classList.remove('show');
+  renderCheckoutSummary();
+  checkoutDrawer.classList.add('show');
+});
+document.getElementById('backToCart').addEventListener('click', ()=>{
+  checkoutDrawer.classList.remove('show');
+  cartDrawer.classList.add('show');
+});
+document.getElementById('closeCheckout').addEventListener('click', ()=> closeDrawer(checkoutDrawer));
+
+/* ==================================================================
+   PLACE ORDER
+   ================================================================== */
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 2400);
+}
+
+document.getElementById('placeOrderBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('inName').value.trim();
+  const phone = document.getElementById('inPhone').value.trim();
+  const address = document.getElementById('inAddress').value.trim();
+  const note = document.getElementById('inNote').value.trim();
+
+  if (!name || !phone || !address){
+    showToast('Please fill in name, phone, and address');
+    if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+    return;
+  }
+
+  const order = {
+    customer: { name, phone, address, note },
+    items: cartEntries().map(i => ({ id:i.id, name:i.name, qty:i.qty, price:i.price })),
+    subtotal: cartTotal(),
+    delivery: DELIVERY_FEE,
+    total: cartTotal() + DELIVERY_FEE,
+    placedAt: new Date().toISOString()
+  };
+
+  if (tg && tg.sendData){
+    // Sends the order back to your Telegram bot for processing.
+    tg.sendData(JSON.stringify(order));
+    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    tg.close();
+  } else {
+    // Fallback when previewing outside Telegram
+    console.log('ORDER', order);
+    showToast('Order placed! (preview mode — see console)');
+    cart = {};
+    updateCartUI();
+    closeAll();
+  }
+});
+
+/* ==================================================================
+   INIT
+   ================================================================== */
+renderStages();
+renderCats();
+renderGrid();
+updateCartUI();
+</script>
+</body>
+</html>
